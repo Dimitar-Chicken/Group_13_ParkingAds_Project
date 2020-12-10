@@ -19,7 +19,7 @@ amqp.connect('amqp://localhost', function(error0, connection) {
     channel.prefetch(1);
     console.log(' [x] Awaiting RPC requests');
     channel.consume(queue, function reply(msg) {
-        if(msg.content.toString() == 'getAd') {
+        if(msg.content.toString() == 'getAd' && msg.properties.type == "ServiceRequest") {
             axios.get('http://psuaddservice.fenris.ucn.dk/').then(response => {
                 console.log(' [.] Sending %s', response.data);
                 channel.sendToQueue(msg.properties.replyTo, Buffer.from(response.data), {
