@@ -46,7 +46,7 @@ amqp.connect('amqp://localhost', function(error0, connection) {
       channel.sendToQueue('rpc_queue',
         Buffer.from('getAd'), {
             correlationId: correlationId,
-            type: "ServiceRequest",
+            type: "service.request",
             replyTo: q.queue });
     });
   });
