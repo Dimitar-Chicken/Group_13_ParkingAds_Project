@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 
+const { v4: uuidv4 } = require('uuid');
 const amqp = require('amqplib/callback_api');
-const fs = require('fs');
-const open = require('open');
 
 amqp.connect('amqp://localhost', function(error0, connection) {
   if (error0) {
@@ -24,15 +23,9 @@ amqp.connect('amqp://localhost', function(error0, connection) {
 
       channel.consume(q.queue, function(msg) {
         if (msg.properties.correlationId == correlationId) {
-            console.log(' [.] Got %s', msg.content.toString());
-
-            fs.writeFile('page.html', msg.content.toString(), function(err) {
-                if (err) {
-                    return console.log(err);
-                }
-            });
-            
-            open('page.html', {'wait': true});
+            console.log(' [o] Sending message to queue %s', q.queue);
+            console.log(' [.] Correlation ID: %s', msg.properties.correlationId.toString());
+            console.log(' [.] Got data: %s', msg.content.toString());
             
             setTimeout(function() {
                 connection.close();
@@ -53,7 +46,5 @@ amqp.connect('amqp://localhost', function(error0, connection) {
 });
 
 function generateUuid() {
-    return Math.random().toString() +
-           Math.random().toString() +
-           Math.random().toString();
+    return uuidv4();
 }

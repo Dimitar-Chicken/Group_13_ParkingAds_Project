@@ -21,7 +21,10 @@ amqp.connect('amqp://localhost', function(error0, connection) {
     channel.consume(queue, function reply(msg) {
         if(msg.content.toString() == 'getAd' && msg.properties.type == "service.request") {
             axios.get('http://psuaddservice.fenris.ucn.dk/').then(response => {
-                console.log(' [.] Sending %s', response.data);
+                console.log(' [o] Sending message to queue: %s', queue);
+                console.log(' [.] Correlation ID: %s', msg.properties.correlationId.toString());
+                console.log(' [.] Sending data: %s', response.data);
+
                 channel.sendToQueue(msg.properties.replyTo, Buffer.from(response.data), {
                     correlationId: msg.properties.correlationId
                 });
