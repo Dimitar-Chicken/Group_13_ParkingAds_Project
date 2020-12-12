@@ -1,0 +1,25 @@
+{
+  "name": "group_13_parkingads_project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "ad_service.js",
+  "dependencies": {
+    "amqplib": "^0.6.0",
+    "axios": "^0.21.0",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dimitar-Chicken/Group_13_ParkingAds_Project.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Dimitar-Chicken/Group_13_ParkingAds_Project/issues"
+  },
+  "homepage": "https://github.com/Dimitar-Chicken/Group_13_ParkingAds_Project#readme"
+}
