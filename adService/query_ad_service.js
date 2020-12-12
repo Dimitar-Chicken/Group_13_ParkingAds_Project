@@ -21,24 +21,25 @@ amqp.connect(rabbitMqConnectionAddress)
                 console.log(' [x] Requesting Ad...');
                 ch.consume(q.queue, (msg) => {
                     if (msg.properties.correlationId == correlationId) {
-                        console.log("1")
+                        //Acknowledging the message as valid.
                         ch.ack(msg);
-                        console.log(' [o] Sending message to queue %s', q.queue);
+
+                        console.log(' [o] Sending message to queue: %s', q.queue);
                         console.log(' [.] Correlation ID: %s', msg.properties.correlationId.toString());
                         console.log(' [.] Got data: %s', msg.content.toString());
                         
                         setTimeout(function() {
                             rabbitMqConnection.close();
-                            process.exit(0)
+                            process.exit(0);
                     }, 500);
                     }
                 });
 
                 return ch.sendToQueue(queue,
-                    Buffer.from('getAd'),
+                    '',
                     {
                         correlationId: correlationId,
-                        type: "service.request",
+                        type: "adService.request",
                         replyTo: q.queue
                     });
             }, {

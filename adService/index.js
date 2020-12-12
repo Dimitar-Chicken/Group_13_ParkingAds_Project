@@ -18,11 +18,11 @@ amqp.connect(rabbitMqConnectionAddress)
             //Allowing the channel to accept up to 1 extra message before the previous one has been acknowledged.
             ch.prefetch(1);
             
-            console.log(' [x] Awaiting RPC requests');
+            console.log(' [x] Awaiting RPC requests...');
             //Consuming the next queue msg and processing it.
             return ch.consume(queue, (msg) => {
                 //Verifying message contents and type.
-                if(msg.content.toString() == 'getAd' && msg.properties.type == "service.request") {
+                if(msg.properties.type == "adService.request") {
                     //Acknowledging the message as valid.
                     ch.ack(msg);
                     axios.get(parkingApiUrl)
