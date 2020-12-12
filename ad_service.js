@@ -1,38 +1,50 @@
 #!/usr/bin/env node
 
-const amqp = require('amqplib/callback_api');
-const axios = require('axios');
+const amqp = require('amqplib');
+const axios = require('axios').default;
 
-amqp.connect('amqp://localhost', function(error0, connection) {
-  if (error0) {
-    throw error0;
-  }
-  connection.createChannel(function(error1, channel) {
-    if (error1) {
-      throw error1;
-    }
-    var queue = 'rpc_queue';
+const queue = 'main-queue';
+const parkingApiUrl = 'http://psuaddservice.fenris.ucn.dk/';
+const rabbitMqConnectionAddress = 'amqp://localhost';
+let rabbitMqConnection = undefined;
 
-    channel.assertQueue(queue, {
-      durable: false
-    });
-    channel.prefetch(1);
-    console.log(' [x] Awaiting RPC requests');
-    channel.consume(queue, function reply(msg) {
-        if(msg.content.toString() == 'getAd' && msg.properties.type == "service.request") {
-            axios.get('http://psuaddservice.fenris.ucn.dk/').then(response => {
-                console.log(' [o] Sending message to queue: %s', queue);
-                console.log(' [.] Correlation ID: %s', msg.properties.correlationId.toString());
-                console.log(' [.] Sending data: %s', response.data);
-
-                channel.sendToQueue(msg.properties.replyTo, Buffer.from(response.data), {
-                    correlationId: msg.properties.correlationId
-                });
-            }).catch(error => {
-                console.log(error);
+amqp.connect(rabbitMqConnectionAddress)
+    .then((conn) => {
+        rabbitMqConnection = conn;
+        return conn.createChannel();
+    })
+    .then((ch) => {
+        return ch.assertQueue(queue, {durable: false}).then((q) => {
+            //Allowing the channel to accept up to 1 extra message before the previous one has been acknowledged.
+            ch.prefetch(1);
+            
+            console.log(' [x] Awaiting RPC requests');
+            //Consuming the next queue msg and processing it.
+            return ch.consume(queue, (msg) => {
+                //Verifying message contents and type.
+                if(msg.content.toString() == 'getAd' && msg.properties.type == "service.request") {
+                    //Acknowledging the message as valid.
+                    ch.ack(msg);
+                    axios.get(parkingApiUrl)
+                        .then(response => {
+                            console.log(' [o] Sending message to queue: %s', queue);
+                            console.log(' [.] Correlation ID: %s', msg.properties.correlationId.toString());
+                            console.log(' [.] Sending data: %s', response.data);
+            
+                            //Sending the message reply to the given replyTo message property along with the correlationId.
+                            ch.sendToQueue(msg.properties.replyTo, Buffer.from(response.data), {
+                                correlationId: msg.properties.correlationId
+                            });
+                        })
+                        .catch((err) => {
+                            console.log(err);
+                        });
+                }
             });
-        }
-        channel.ack(msg);
+        }, {
+            noAck: true
+        });
+    })
+    .catch((err) => {
+        console.log(err);
     });
-  });
-});

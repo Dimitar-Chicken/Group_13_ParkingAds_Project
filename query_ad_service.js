@@ -1,49 +1,53 @@
 #!/usr/bin/env node
 
 const { v4: uuidv4 } = require('uuid');
-const amqp = require('amqplib/callback_api');
+const amqp = require('amqplib');
 
-amqp.connect('amqp://localhost', function(error0, connection) {
-  if (error0) {
-    throw error0;
-  }
-  connection.createChannel(function(error1, channel) {
-    if (error1) {
-      throw error1;
-    }
-    channel.assertQueue('', {
-      exclusive: true
-    }, function(error2, q) {
-      if (error2) {
-        throw error2;
-      }
-      var correlationId = generateUuid();
+const queue = 'main-queue';
+const rabbitMqConnectionAddress = 'amqp://localhost';
+let rabbitMqConnection = undefined;
 
-      console.log(' [x] Requesting Ad...');
+amqp.connect(rabbitMqConnectionAddress)
+    .then((conn) => {
+        rabbitMqConnection = conn;
+        return conn.createChannel();
+    })
+    .then((ch) => {
+        ch.assertQueue('', {exclusive: true})
+            .then((q) => {
+                //Generating a UUID to use a message correlation ID.
+                var correlationId = generateUuid();
 
-      channel.consume(q.queue, function(msg) {
-        if (msg.properties.correlationId == correlationId) {
-            console.log(' [o] Sending message to queue %s', q.queue);
-            console.log(' [.] Correlation ID: %s', msg.properties.correlationId.toString());
-            console.log(' [.] Got data: %s', msg.content.toString());
-            
-            setTimeout(function() {
-                connection.close();
-                process.exit(0)
-          }, 500);
-        }
-      }, {
-        noAck: true
-      });
+                console.log(' [x] Requesting Ad...');
+                ch.consume(q.queue, (msg) => {
+                    if (msg.properties.correlationId == correlationId) {
+                        console.log("1")
+                        ch.ack(msg);
+                        console.log(' [o] Sending message to queue %s', q.queue);
+                        console.log(' [.] Correlation ID: %s', msg.properties.correlationId.toString());
+                        console.log(' [.] Got data: %s', msg.content.toString());
+                        
+                        setTimeout(function() {
+                            rabbitMqConnection.close();
+                            process.exit(0)
+                    }, 500);
+                    }
+                });
 
-      channel.sendToQueue('rpc_queue',
-        Buffer.from('getAd'), {
-            correlationId: correlationId,
-            type: "service.request",
-            replyTo: q.queue });
+                return ch.sendToQueue(queue,
+                    Buffer.from('getAd'),
+                    {
+                        correlationId: correlationId,
+                        type: "service.request",
+                        replyTo: q.queue
+                    });
+            }, {
+                noAck: true
+            });
+    })
+    .catch((err) => {
+        console.log(err);
     });
-  });
-});
 
 function generateUuid() {
     return uuidv4();
