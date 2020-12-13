@@ -14,7 +14,12 @@ amqp.connect(rabbitMqConnectionAddress)
         return conn.createChannel();
     })
     .then((ch) => {
-        return ch.assertQueue(queue, {durable: false}).then((q) => {
+        return ch.assertQueue(queue, {
+            durable: false,
+            arguments: {
+                "x-message-ttl" : 30000
+            }
+        }).then((q) => {
             //Allowing the channel to accept up to 1 extra message before the previous one has been acknowledged.
             ch.prefetch(1);
             

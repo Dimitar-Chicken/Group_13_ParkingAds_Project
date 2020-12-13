@@ -13,7 +13,12 @@ amqp.connect(rabbitMqConnectionAddress)
         return conn.createChannel();
     })
     .then((ch) => {
-        ch.assertQueue('', {exclusive: true})
+        ch.assertQueue('', {
+            exclusive: true,
+            arguments: {
+                "x-message-ttl" : 30000
+            }
+        })
             .then((q) => {
                 //Generating a UUID to use a message correlation ID.
                 var correlationId = generateUuid();
