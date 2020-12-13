@@ -26,7 +26,7 @@ app.listen(SERVER_PORT, () => {
 });
 
 //Scheduling Ad caching.
-cron.schedule('*/2 * * * * *', () => {
+cron.schedule('*/2 * * * *', () => {
     console.log(' [o] Caching Ad.');
     queryAdService();
 });
