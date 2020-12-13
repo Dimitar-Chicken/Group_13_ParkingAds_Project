@@ -35,6 +35,7 @@ amqp.connect(rabbitMqConnectionAddress)
                             console.log(' [o] Sending message to queue: %s', queue);
                             console.log(' [.] Correlation ID: %s', msg.properties.correlationId.toString());
                             console.log(' [.] Sending data: %s', response.data);
+                            console.log(' [ ]');
             
                             //Sending the message reply to the given replyTo message property along with the correlationId.
                             ch.sendToQueue(msg.properties.replyTo, Buffer.from(response.data), {
